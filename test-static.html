@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Static Build Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    pre {
+      background-color: #f5f5f5;
+      padding: 10px;
+      border-radius: 5px;
+      overflow: auto;
+    }
+    .success {
+      color: green;
+      font-weight: bold;
+    }
+    .error {
+      color: red;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>Static Build Test</h1>
+  <p>This page tests the static build by loading the necessary files and ensuring they work correctly.</p>
+  
+  <h2>Test Results:</h2>
+  <div id="results">Running tests...</div>
+
+  <script>
+    const results = document.getElementById('results');
+    const tests = [];
+
+    // Test 1: Can load CSS
+    function testCSS() {
+      return new Promise((resolve) => {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = './static-build/styles.css';
+        link.onload = () => resolve({ success: true, message: 'CSS loaded successfully' });
+        link.onerror = () => resolve({ success: false, message: 'Failed to load CSS' });
+        document.head.appendChild(link);
+      });
+    }
+
+    // Test 2: Can load JS
+    function testJS() {
+      return new Promise((resolve) => {
+        const script = document.createElement('script');
+        script.src = './static-build/app.js';
+        script.onload = () => resolve({ success: true, message: 'JavaScript loaded successfully' });
+        script.onerror = () => resolve({ success: false, message: 'Failed to load JavaScript' });
+        document.body.appendChild(script);
+      });
+    }
+
+    // Test 3: Check if index.html exists and has correct content
+    async function testHTML() {
+      try {
+        const response = await fetch('./static-build/index.html');
+        if (!response.ok) {
+          return { success: false, message: 'Failed to load HTML' };
+        }
+        const html = await response.text();
+        if (html.includes('id="root"') && html.includes('styles.css') && html.includes('app.js')) {
+          return { success: true, message: 'HTML content is correct' };
+        } else {
+          return { success: false, message: 'HTML content is incorrect' };
+        }
+      } catch (error) {
+        return { success: false, message: `Error: ${error.message}` };
+      }
+    }
+
+    // Run all tests
+    async function runTests() {
+      results.innerHTML = '';
+      
+      const cssResult = await testCSS();
+      const jsResult = await testJS();
+      const htmlResult = await testHTML();
+      
+      const allTests = [
+        { name: 'CSS Test', ...cssResult },
+        { name: 'JavaScript Test', ...jsResult },
+        { name: 'HTML Test', ...htmlResult }
+      ];
+      
+      const resultHTML = allTests.map(test => {
+        const statusClass = test.success ? 'success' : 'error';
+        return `<p><span class="${statusClass}">${test.name}:</span> ${test.message}</p>`;
+      }).join('');
+      
+      results.innerHTML = resultHTML;
+    }
+
+    // Run tests when page loads
+    window.onload = runTests;
+  </script>
+</body>
+</html>
